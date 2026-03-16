@@ -98,5 +98,3 @@ src/
 - 🐙 [GitHub](https://github.com/evertonmedola)
 
 ---
-
-<p align="center">Feito com ☀️ para a galera do beach tennis</p>
