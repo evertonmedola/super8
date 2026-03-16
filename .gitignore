@@ -4,10 +4,7 @@ node_modules/
 # Build output
 dist/
 .angular/
- 
-# Environment / secrets
-src/app/core/firebase.config.ts
- 
+
 # Logs
 npm-debug.log*
 yarn-debug.log*
@@ -26,3 +23,6 @@ yarn-error.log*
 # OS
 .DS_Store
 Thumbs.db
+
+src/environments/environment.ts
+src/environments/environment.prod.ts
