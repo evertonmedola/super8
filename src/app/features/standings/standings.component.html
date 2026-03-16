@@ -1,0 +1,58 @@
+<div class="page-header">
+  <h1 class="page-title">Classificação</h1>
+  <p class="page-sub">Ranking por saldo de pontos</p>
+</div>
+
+@if (!store.isGenerated()) {
+  <div class="empty-state"><div class="empty-icon">📊</div><p>Gere o torneio para ver a classificação.</p></div>
+} @else {
+  <div class="card">
+    <div class="table-scroll">
+      <table class="standings-table">
+        <thead>
+          <tr>
+            <th class="col-rank">#</th>
+            <th>Jogador</th>
+            <th class="col-num">J</th>
+            <th class="col-num">V</th>
+            <th class="col-num">E</th>
+            <th class="col-num">D</th>
+            <th class="col-num">Saldo</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.player.id) {
+            <tr [class.finalist-row]="row.isFinalist && store.classificationComplete()">
+              <td class="col-rank td-rank">{{ rankIcon(row.rank) }}</td>
+              <td class="td-name">
+                {{ row.player.name }}
+                @if (row.isFinalist && store.classificationComplete()) {
+                  <span class="finalist-tag">FINAL</span>
+                }
+              </td>
+              <td class="col-num">{{ row.played }}</td>
+              <td class="col-num">{{ row.wins }}</td>
+              <td class="col-num">{{ row.draws }}</td>
+              <td class="col-num">{{ row.losses }}</td>
+              <td class="col-num" [ngClass]="saldoClass(row.saldo)">{{ saldoFmt(row.saldo) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (store.classificationComplete()) {
+      <div class="alert alert-success" style="margin-top:16px;">
+        ✅ Top 4 definidos! Vá para a aba <strong>Final</strong>.
+      </div>
+    }
+  </div>
+
+  <div class="card">
+    <div class="card-title">ℹ️ Critério de Desempate</div>
+    <p class="helper-text">
+      Empate no saldo → <strong>confronto direto</strong> entre os empatados.<br>
+      Na fase final, o saldo da classificatória serve como critério de desempate.
+    </p>
+  </div>
+}

@@ -1,0 +1,14 @@
+<div class="score-row">
+  <span class="score-label">Resultado:</span>
+  @for (opt of options; track opt.team1) {
+    <button
+      class="score-btn"
+      [class.selected]="isSelected(opt)"
+      [disabled]="readonly()"
+      (click)="select(opt)"
+    >{{ opt.team1 }}×{{ opt.team2 }}</button>
+  }
+  @if (current() !== null && !readonly()) {
+    <button class="btn-clear" (click)="clear()" title="Limpar">✕</button>
+  }
+</div>
