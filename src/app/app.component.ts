@@ -17,29 +17,30 @@ type Page = 'setup' | 'matches' | 'standings' | 'final';
   templateUrl: './app.component.html',
 })
 export class AppComponent {
-  readonly page      = signal<Page>('setup');
-  readonly menuOpen  = signal(false);
+  readonly page = signal<Page>('setup');
+  readonly menuOpen = signal(false);
   readonly loginModal = signal(false);
 
   loginPassword = '';
-  loginError    = signal<string | null>(null);
+  loginError = signal<string | null>(null);
 
   readonly nav: { id: Page; label: string }[] = [
-    { id: 'setup',     label: 'Jogadores'    },
-    { id: 'matches',   label: 'Jogos'        },
+    { id: 'setup', label: 'Jogadores' },
+    { id: 'matches', label: 'Jogos' },
     { id: 'standings', label: 'Classificação' },
-    { id: 'final',     label: 'Final'        },
+    { id: 'final', label: 'Final' },
   ];
 
-  constructor(public store: TournamentStore, public auth: AuthService) {}
+  constructor(public store: TournamentStore, public auth: AuthService) { }
 
   goTo(p: Page) { this.page.set(p); this.menuOpen.set(false); }
 
-  openLogin()  { this.loginModal.set(true); this.loginError.set(null); this.loginPassword = ''; }
+  openLogin() { this.loginModal.set(true); this.loginError.set(null); this.loginPassword = ''; }
   closeLogin() { this.loginModal.set(false); }
 
-  submitLogin() {
-    if (this.auth.login(this.loginPassword)) {
+  async submitLogin() {
+    const ok = await this.auth.login(this.loginPassword);
+    if (ok) {
       this.loginModal.set(false);
       this.loginPassword = '';
     } else {

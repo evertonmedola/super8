@@ -13,8 +13,8 @@ import { Player, Match, GenerationMode } from '../../core/models/tournament.mode
   templateUrl: './setup.component.html',
 })
 export class SetupComponent implements OnInit {
-  tournamentName = '';
-  players: string[] = Array(8).fill('');
+  tournamentName = signal('');
+  players = signal<string[]>(Array(8).fill(''));
   mode = signal<GenerationMode>('auto');
   manualMatches = signal<Match[]>([]);
   manualError = signal<string | null>(null);
@@ -29,24 +29,25 @@ export class SetupComponent implements OnInit {
   showPasswordForm = signal(false);
   showChangeForm = signal(false);
 
-  readonly playerNumbers = [1,2,3,4,5,6,7,8];
+  readonly playerNumbers = [1, 2, 3, 4, 5, 6, 7, 8];
 
   readonly canGenerate = computed(() =>
-    this.tournamentName.trim().length > 0 &&
-    this.players.every(p => p.trim().length > 0)
+    this.tournamentName().trim().length > 0 &&
+    this.players().every(p => p.trim().length > 0)
   );
+
 
   constructor(
     public store: TournamentStore,
     public auth: AuthService,
     private scheduleService: ScheduleService,
-  ) {}
+  ) { }
 
   ngOnInit() {
     const t = this.store.tournament();
     if (t) {
-      this.tournamentName = t.name;
-      this.players = t.players.map(p => p.name);
+      this.tournamentName.set(t.name);
+      this.players.set(t.players.map(p => p.name));
       this.mode.set(t.generationMode);
     }
     this.manualMatches.set(this.scheduleService.getFixedSchedule());
@@ -56,8 +57,8 @@ export class SetupComponent implements OnInit {
 
   generate() {
     if (!this.canGenerate()) return;
-    const playerObjs: Player[] = this.players.map((name, i) => ({ id: i + 1, name: name.trim() }));
-    this.store.upsertTournament(this.tournamentName.trim(), playerObjs);
+    const playerObjs: Player[] = this.players().map((name, i) => ({ id: i + 1, name: name.trim() }));
+    this.store.upsertTournament(this.tournamentName().trim(), playerObjs);
 
     if (this.mode() === 'manual') {
       const val = this.scheduleService.validateManualSchedule(this.manualMatches());
@@ -67,6 +68,12 @@ export class SetupComponent implements OnInit {
     } else {
       this.store.generateMatches('auto');
     }
+  }
+
+  updatePlayer(index: number, value: string) {
+    const arr = [...this.players()];
+    arr[index] = value;
+    this.players.set(arr);
   }
 
   updateManualTeam(matchIdx: number, team: 'team1' | 'team2', slot: 0 | 1, value: number) {
@@ -85,26 +92,26 @@ export class SetupComponent implements OnInit {
   confirmReset() {
     if (confirm('Apagar todos os dados do torneio?')) {
       this.store.reset();
-      this.tournamentName = '';
-      this.players = Array(8).fill('');
+      this.tournamentName = signal('');
+      this.players = signal<string[]>(Array(8).fill(''));
     }
   }
 
   // ── Password ──────────────────────────────────────────────────────
 
-  savePassword() {
+  async savePassword() {
     if (this.newPassword.length < 4) { this.passwordError.set('Senha deve ter pelo menos 4 caracteres.'); return; }
     if (this.newPassword !== this.confirmPassword) { this.passwordError.set('As senhas não coincidem.'); return; }
-    this.auth.setPassword(this.newPassword);
+    await this.auth.setPassword(this.newPassword);
     this.passwordError.set(null);
     this.passwordSuccess.set('Senha definida com sucesso!');
     this.newPassword = ''; this.confirmPassword = '';
     setTimeout(() => { this.passwordSuccess.set(null); this.showPasswordForm.set(false); }, 2000);
   }
 
-  changePassword() {
+  async changePassword() {
     if (this.nextPassword.length < 4) { this.passwordError.set('Nova senha deve ter pelo menos 4 caracteres.'); return; }
-    const ok = this.auth.changePassword(this.currentPassword, this.nextPassword);
+    const ok = await this.auth.changePassword(this.currentPassword, this.nextPassword);
     if (!ok) { this.passwordError.set('Senha atual incorreta.'); return; }
     this.passwordError.set(null);
     this.passwordSuccess.set('Senha alterada com sucesso!');

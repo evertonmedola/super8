@@ -1,57 +1,79 @@
 import { Injectable, signal } from '@angular/core';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '../firebase.config';
 
-const AUTH_KEY = 'super8_auth';
-const DEFAULT_HASH_PREFIX = 'super8_';
+const AUTH_DOC = 'config';
+const AUTH_FIELD = 'passwordHash';
+const COLLECTION = 'app';
+const SESSION_KEY = 'super8_session';
+const HASH_PREFIX = 'super8_';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
 
-  // true = organizer mode unlocked
   readonly isOrganizer = signal<boolean>(this.checkSession());
+  readonly hasPassword = signal<boolean>(false);
+  readonly loading = signal<boolean>(true);
 
-  private storedHash(): string | null {
-    return localStorage.getItem(AUTH_KEY);
+  constructor() {
+    this.loadPasswordStatus();
   }
 
-  hasPassword(): boolean {
-    return !!this.storedHash();
-  }
-
-  setPassword(password: string): void {
-    const hash = this.simpleHash(password);
-    localStorage.setItem(AUTH_KEY, hash);
-    this.isOrganizer.set(true);
-  }
-
-  login(password: string): boolean {
-    const hash = this.simpleHash(password);
-    if (hash === this.storedHash()) {
-      sessionStorage.setItem('super8_session', '1');
-      this.isOrganizer.set(true);
-      return true;
+  // Verifica no Firestore se já existe senha cadastrada
+  private async loadPasswordStatus() {
+    try {
+      const snap = await getDoc(doc(db, COLLECTION, AUTH_DOC));
+      this.hasPassword.set(snap.exists() && !!snap.data()?.[AUTH_FIELD]);
+    } catch {
+      this.hasPassword.set(false);
+    } finally {
+      this.loading.set(false);
     }
-    return false;
   }
 
-  logout(): void {
-    sessionStorage.removeItem('super8_session');
-    this.isOrganizer.set(false);
+  async setPassword(password: string): Promise<void> {
+    const hash = this.simpleHash(password);
+    await setDoc(doc(db, COLLECTION, AUTH_DOC), { [AUTH_FIELD]: hash });
+    this.hasPassword.set(true);
+    this.isOrganizer.set(true);
+    sessionStorage.setItem(SESSION_KEY, '1');
   }
 
-  changePassword(current: string, next: string): boolean {
-    if (!this.login(current)) return false;
-    this.setPassword(next);
+  async login(password: string): Promise<boolean> {
+    try {
+      const snap = await getDoc(doc(db, COLLECTION, AUTH_DOC));
+      if (!snap.exists()) return false;
+      const stored = snap.data()?.[AUTH_FIELD];
+      if (stored === this.simpleHash(password)) {
+        sessionStorage.setItem(SESSION_KEY, '1');
+        this.isOrganizer.set(true);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
+  async changePassword(current: string, next: string): Promise<boolean> {
+    const ok = await this.login(current);
+    if (!ok) return false;
+    await this.setPassword(next);
     return true;
   }
 
-  private checkSession(): boolean {
-    return sessionStorage.getItem('super8_session') === '1';
+  logout(): void {
+    sessionStorage.removeItem(SESSION_KEY);
+    this.isOrganizer.set(false);
   }
 
-  // Simple deterministic hash — good enough for casual protection
+  private checkSession(): boolean {
+    return sessionStorage.getItem(SESSION_KEY) === '1';
+  }
+
   private simpleHash(str: string): string {
     let hash = 0;
-    const s = DEFAULT_HASH_PREFIX + str;
+    const s = HASH_PREFIX + str;
     for (let i = 0; i < s.length; i++) {
       hash = ((hash << 5) - hash) + s.charCodeAt(i);
       hash |= 0;
