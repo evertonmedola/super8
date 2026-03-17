@@ -1,4 +1,4 @@
-import { Injectable, signal, computed, OnDestroy, effect } from '@angular/core';
+import { Injectable, signal, computed, OnDestroy } from '@angular/core';
 import {
   doc, setDoc, deleteDoc, onSnapshot,
   Unsubscribe, DocumentSnapshot
@@ -40,9 +40,9 @@ export class TournamentStore implements OnDestroy {
 
   readonly needsTiebreaker = computed(() => {
     const t = this.tournament();
-    if (!t || !t.players || !this.classificationComplete()) return false;
-    if (t.tiebreaker !== null && t.tiebreaker !== undefined) return false;
-    return this.stats.hasTiebreakerNeeded(t);
+    if (!t || !this.classificationComplete()) return false;
+    // Mostra o bloco se há empate OU se já tem tiebreaker salvo sem resultado
+    return !!t.tiebreaker || this.stats.hasTiebreakerNeeded(t);
   });
 
   readonly tiebreakerResolved = computed(() => {
@@ -135,12 +135,10 @@ export class TournamentStore implements OnDestroy {
     if (!t) return;
     const matches = t.matches.map((m, i) => i === index ? { ...m, score } : m);
 
-    const allDone = matches.every(m => m.score !== null);
     let tiebreaker = t.tiebreaker ?? null;
-
+    const allDone = matches.every(m => m.score !== null);
     if (allDone) {
-      const updated = { ...t, matches };
-      const pair = this.stats.getTiebreakerPlayers(updated);
+      const pair = this.stats.getTiebreakerPlayers({ ...t, matches });
       tiebreaker = pair ? { players: pair, score: null } : null;
     }
 
@@ -151,7 +149,8 @@ export class TournamentStore implements OnDestroy {
     const t = this.tournament();
     if (!t) return;
     const matches = t.matches.map((m, i) => i === index ? { ...m, score: null } : m);
-    this.commit({ ...t, matches });
+    // Reseta o tiebreaker ao desfazer um placar
+    this.commit({ ...t, matches, tiebreaker: null });
   }
 
   // ── Final ────────────────────────────────────────────────────────
@@ -215,7 +214,7 @@ export class TournamentStore implements OnDestroy {
   // ── Internal ─────────────────────────────────────────────────────
 
   private async commit(t: Tournament) {
-    this.tournament.set(t);   // optimistic update
+    this.tournament.set(t);
     this.saveLocal(t);
 
     this.syncing.set(true);

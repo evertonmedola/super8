@@ -72,7 +72,7 @@
 </div>
 }
 
-@if (store.classificationComplete() && store.needsTiebreaker()) {
+@if (store.classificationComplete() && store.needsTiebreaker() && store.tournament()!.tiebreaker) {
 <div class="card" style="border-color: rgba(255,183,3,0.4);">
   <div class="card-title">⚡ Partida de Desempate</div>
   <p class="helper-text" style="margin-bottom:16px;">
