@@ -960,6 +960,53 @@ input[type=password] {
   animation: fadeUp .4s ease both;
 }
 
+.tiebreaker-players {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.tiebreaker-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: $r-md;
+  color: $white;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+
+  &:hover:not(:disabled) {
+    background: $surface-hover;
+    border-color: rgba(255, 255, 255, .2);
+  }
+
+  &.selected {
+    border-color: $sun;
+    background: rgba(255, 183, 3, .1);
+    box-shadow: 0 0 0 1px rgba(255, 183, 3, .2);
+  }
+
+  &:disabled {
+    opacity: .5;
+    cursor: default;
+  }
+}
+
+.winner-tag {
+  font-size: 11px;
+  color: $success-text;
+  font-weight: 700;
+  margin-left: 4px;
+}
+
 .champion-trophy {
   font-size: 50px;
   margin-bottom: 10px;

@@ -76,37 +76,24 @@
 <div class="card" style="border-color: rgba(255,183,3,0.4);">
   <div class="card-title">⚡ Partida de Desempate</div>
   <p class="helper-text" style="margin-bottom:16px;">
-    Empate na 4ª posição! Registre o resultado da partida de desempate.
+    Empate na 4ª posição! Selecione o vencedor da partida de desempate.
   </p>
 
-  <div class="teams-row">
-    <div class="team-box">
-      <div class="team-player">
-        <span class="num-badge">{{ store.tournament()!.tiebreaker!.players[0] }}</span>
-        {{ name(store.tournament()!.tiebreaker!.players[0]) }}
-      </div>
-    </div>
-    <div class="vs-divider">
-      @if (store.tournament()!.tiebreaker?.score) {
-      <div class="live-score">
-        {{ store.tournament()!.tiebreaker!.score!.team1 }}
-        <span>×</span>
-        {{ store.tournament()!.tiebreaker!.score!.team2 }}
-      </div>
-      } @else {
-      <span class="vs-text">VS</span>
+  <div class="tiebreaker-players">
+    @for (playerId of store.tournament()!.tiebreaker!.players; track playerId) {
+    <button class="tiebreaker-btn" [class.selected]="store.tournament()!.tiebreaker!.winner === playerId"
+      [disabled]="!auth.isOrganizer()" (click)="store.setTiebreakerWinner(playerId)">
+      <span class="num-badge">{{ playerId }}</span>
+      {{ name(playerId) }}
+      @if (store.tournament()!.tiebreaker!.winner === playerId) {
+      <span class="winner-tag">✅ Vencedor</span>
       }
-    </div>
-    <div class="team-box team-right">
-      <div class="team-player reverse">
-        <span class="num-badge">{{ store.tournament()!.tiebreaker!.players[1] }}</span>
-        {{ name(store.tournament()!.tiebreaker!.players[1]) }}
-      </div>
-    </div>
+    </button>
+    }
+    @if (store.tournament()!.tiebreaker!.winner !== null && auth.isOrganizer()) {
+    <button class="btn-clear" (click)="store.clearTiebreakerWinner()">✕</button>
+    }
   </div>
-
-  <app-score-selector [current]="store.tournament()!.tiebreaker?.score ?? null" [readonly]="!auth.isOrganizer()"
-    (scoreChange)="store.setTiebreakerScore($event)" (cleared)="store.clearTiebreakerScore()" />
 </div>
 }
 

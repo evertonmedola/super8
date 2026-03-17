@@ -24,7 +24,7 @@ export class MatchesComponent {
       .map((m, index) => ({ ...m, index }))
       .filter(m => {
         if (f === 'pending') return m.score === null;
-        if (f === 'done')    return m.score !== null;
+        if (f === 'done') return m.score !== null;
         return true;
       });
   });
@@ -32,7 +32,7 @@ export class MatchesComponent {
   constructor(
     public store: TournamentStore,
     public auth: AuthService,
-  ) {}
+  ) { }
 
   setFilter(f: Filter) { this.filter.set(f); }
 

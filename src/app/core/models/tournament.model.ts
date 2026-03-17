@@ -33,7 +33,7 @@ export interface PlayerStats {
 
 export interface TiebreakerMatch {
   players: [number, number];
-  score: MatchScore | null;
+  winner: number | null;
 }
 
 export type GenerationMode = 'auto' | 'manual';

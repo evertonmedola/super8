@@ -47,19 +47,19 @@ export class TournamentStore implements OnDestroy {
 
   readonly tiebreakerResolved = computed(() => {
     const t = this.tournament();
-    return !!t?.tiebreaker?.score;
+    return t?.tiebreaker?.winner != null;
   });
 
-  setTiebreakerScore(score: MatchScore) {
+  setTiebreakerWinner(playerId: number) {
     const t = this.tournament();
     if (!t?.tiebreaker) return;
-    this.commit({ ...t, tiebreaker: { ...t.tiebreaker, score } });
+    this.commit({ ...t, tiebreaker: { ...t.tiebreaker, winner: playerId } });
   }
 
-  clearTiebreakerScore() {
+  clearTiebreakerWinner() {
     const t = this.tournament();
     if (!t?.tiebreaker) return;
-    this.commit({ ...t, tiebreaker: { ...t.tiebreaker, score: null } });
+    this.commit({ ...t, tiebreaker: { ...t.tiebreaker, winner: null } });
   }
 
   readonly finalStarted = computed(() => (this.tournament()?.finalMatches.length ?? 0) > 0);
@@ -139,7 +139,7 @@ export class TournamentStore implements OnDestroy {
     const allDone = matches.every(m => m.score !== null);
     if (allDone) {
       const pair = this.stats.getTiebreakerPlayers({ ...t, matches });
-      tiebreaker = pair ? { players: pair, score: null } : null;
+      tiebreaker = pair ? { players: pair, winner: null } : null;
     }
 
     this.commit({ ...t, matches, tiebreaker });
@@ -161,9 +161,8 @@ export class TournamentStore implements OnDestroy {
     let finalists = this.stats.getFinalistIds(t);
 
     // Se houve tiebreaker, substitui o perdedor pelo vencedor
-    if (t.tiebreaker?.score) {
-      const { players, score } = t.tiebreaker;
-      const winner = score.team1 > score.team2 ? players[0] : players[1];
+    if (t.tiebreaker?.winner != null) {
+      const winner = t.tiebreaker.winner;
       // Garante que o vencedor está no top 4
       if (!finalists.includes(winner)) {
         finalists[3] = winner;
