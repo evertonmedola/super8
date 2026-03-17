@@ -31,7 +31,7 @@ export class FinalComponent {
         const allRows = this.stats.buildStandings(t, false);
         const winnerRow = allRows.find(r => r.player.id === winner);
         if (winnerRow) {
-          return rows.map(r => r.player.id === loser ? winnerRow : r);
+          return rows.map(r => r.player.id === loser ? { ...winnerRow, rank: 4 } : r);
         }
       }
     }
