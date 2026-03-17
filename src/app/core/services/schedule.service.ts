@@ -7,18 +7,24 @@ import { Match, FinalMatch } from '../models/tournament.model';
 const BASE_SCHEDULE: Array<{ game: number; team1: [number, number]; team2: [number, number] }> = [
   { game: 1, team1: [1, 2], team2: [3, 4] },
   { game: 2, team1: [5, 6], team2: [7, 8] },
-  { game: 3, team1: [1, 3], team2: [5, 7] },
-  { game: 4, team1: [2, 4], team2: [6, 8] },
-  { game: 5, team1: [1, 4], team2: [6, 7] },
-  { game: 6, team1: [2, 3], team2: [5, 8] },
-  { game: 7, team1: [1, 5], team2: [2, 6] },
-  { game: 8, team1: [3, 7], team2: [4, 8] },
-  { game: 9, team1: [1, 6], team2: [3, 8] },
-  { game: 10, team1: [2, 5], team2: [4, 7] },
-  { game: 11, team1: [1, 7], team2: [4, 5] },
-  { game: 12, team1: [2, 8], team2: [3, 6] },
-  { game: 13, team1: [1, 8], team2: [2, 7] },
-  { game: 14, team1: [3, 5], team2: [4, 6] }
+
+  { game: 3, team1: [1, 3], team2: [2, 5] },
+  { game: 4, team1: [4, 6], team2: [7, 8] },
+
+  { game: 5, team1: [1, 4], team2: [2, 6] },
+  { game: 6, team1: [3, 5], team2: [7, 8] },
+
+  { game: 7, team1: [1, 5], team2: [2, 7] },
+  { game: 8, team1: [3, 6], team2: [4, 8] },
+
+  { game: 9, team1: [1, 6], team2: [2, 8] },
+  { game: 10, team1: [3, 7], team2: [4, 5] },
+
+  { game: 11, team1: [1, 7], team2: [3, 8] },
+  { game: 12, team1: [2, 4], team2: [5, 6] },
+
+  { game: 13, team1: [1, 8], team2: [2, 3] },
+  { game: 14, team1: [4, 7], team2: [5, 8] }
 ];
 
 // 3-game final schedule template for 4 players [A,B,C,D]

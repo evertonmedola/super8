@@ -31,6 +31,11 @@ export interface PlayerStats {
   saldo: number;
 }
 
+export interface TiebreakerMatch {
+  players: [number, number];
+  score: MatchScore | null;
+}
+
 export type GenerationMode = 'auto' | 'manual';
 export type TournamentPhase = 'setup' | 'classification' | 'final' | 'finished';
 
@@ -44,4 +49,5 @@ export interface Tournament {
   matches: Match[];
   finalMatches: FinalMatch[];
   finalists: number[];
+  tiebreaker: TiebreakerMatch | null;
 }

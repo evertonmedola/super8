@@ -1,4 +1,4 @@
-import { Injectable, signal, computed, OnDestroy } from '@angular/core';
+import { Injectable, signal, computed, OnDestroy, effect } from '@angular/core';
 import {
   doc, setDoc, deleteDoc, onSnapshot,
   Unsubscribe, DocumentSnapshot
@@ -8,17 +8,17 @@ import { Tournament, Player, Match, FinalMatch, GenerationMode, MatchScore } fro
 import { ScheduleService } from './schedule.service';
 import { StatsService } from './stats.service';
 
-const DOC_ID     = 'active';
+const DOC_ID = 'active';
 const COLLECTION = 'tournaments';
-const LOCAL_KEY  = 'super8_tournament';
+const LOCAL_KEY = 'super8_tournament';
 
 @Injectable({ providedIn: 'root' })
 export class TournamentStore implements OnDestroy {
 
   // ── Signals ──────────────────────────────────────────────────────
   readonly tournament = signal<Tournament | null>(this.loadLocal());
-  readonly syncing    = signal<boolean>(false);
-  readonly online     = signal<boolean>(true);
+  readonly syncing = signal<boolean>(false);
+  readonly online = signal<boolean>(true);
 
   readonly isGenerated = computed(() => (this.tournament()?.matches.length ?? 0) > 0);
 
@@ -38,6 +38,29 @@ export class TournamentStore implements OnDestroy {
     this.isGenerated() && this.completedMatches() === this.totalMatches()
   );
 
+  readonly needsTiebreaker = computed(() => {
+    const t = this.tournament();
+    if (!t || !this.classificationComplete()) return false;
+    return this.stats.hasTiebreakerNeeded(t);
+  });
+
+  readonly tiebreakerResolved = computed(() => {
+    const t = this.tournament();
+    return !!t?.tiebreaker?.score;
+  });
+
+  setTiebreakerScore(score: MatchScore) {
+    const t = this.tournament();
+    if (!t?.tiebreaker) return;
+    this.commit({ ...t, tiebreaker: { ...t.tiebreaker, score } });
+  }
+
+  clearTiebreakerScore() {
+    const t = this.tournament();
+    if (!t?.tiebreaker) return;
+    this.commit({ ...t, tiebreaker: { ...t.tiebreaker, score: null } });
+  }
+
   readonly finalStarted = computed(() => (this.tournament()?.finalMatches.length ?? 0) > 0);
 
   readonly finalComplete = computed(() => {
@@ -52,6 +75,19 @@ export class TournamentStore implements OnDestroy {
     private stats: StatsService,
   ) {
     this.subscribeFirestore();
+
+    effect(() => {
+      const t = this.tournament();
+      if (!t || !this.classificationComplete()) return;
+      if (t.tiebreaker !== undefined) return; // já foi inicializado
+
+      const pair = this.stats.getTiebreakerPlayers(t);
+      if (pair) {
+        this.commit({ ...t, tiebreaker: { players: pair, score: null } });
+      } else {
+        this.commit({ ...t, tiebreaker: null });
+      }
+    });
   }
 
   ngOnDestroy() { this.unsub?.(); }
@@ -81,16 +117,17 @@ export class TournamentStore implements OnDestroy {
     const next: Tournament = current
       ? { ...current, name, players }
       : {
-          id: crypto.randomUUID(),
-          name,
-          createdAt: new Date().toISOString(),
-          phase: 'setup',
-          players,
-          generationMode: 'auto',
-          matches: [],
-          finalMatches: [],
-          finalists: [],
-        };
+        id: crypto.randomUUID(),
+        name,
+        createdAt: new Date().toISOString(),
+        phase: 'setup',
+        players,
+        generationMode: 'auto',
+        matches: [],
+        finalMatches: [],
+        finalists: [],
+        tiebreaker: null,
+      };
     this.commit(next);
   }
 
@@ -100,7 +137,7 @@ export class TournamentStore implements OnDestroy {
     const matches = mode === 'auto'
       ? this.schedule.getRandomSchedule()
       : (manualMatches ?? this.schedule.getFixedSchedule());
-    this.commit({ ...t, generationMode: mode, matches, phase: 'classification', finalMatches: [], finalists: [] });
+    this.commit({ ...t, generationMode: mode, matches, phase: 'classification', finalMatches: [], finalists: [], tiebreaker: null });
   }
 
   // ── Classification ───────────────────────────────────────────────
@@ -124,9 +161,21 @@ export class TournamentStore implements OnDestroy {
   startFinal() {
     const t = this.tournament();
     if (!t) return;
-    const finalists    = this.stats.getFinalistIds(t);
+    let finalists = this.stats.getFinalistIds(t);
+
+    // Se houve tiebreaker, substitui o perdedor pelo vencedor
+    if (t.tiebreaker?.score) {
+      const { players, score } = t.tiebreaker;
+      const winner = score.team1 > score.team2 ? players[0] : players[1];
+      // Garante que o vencedor está no top 4
+      if (!finalists.includes(winner)) {
+        finalists[3] = winner;
+      }
+    }
+
     const finalMatches = this.schedule.getFinalSchedule(finalists);
     this.commit({ ...t, finalists, finalMatches, phase: 'final' });
+
   }
 
   reshuffleFinal() {
@@ -185,7 +234,7 @@ export class TournamentStore implements OnDestroy {
   private saveLocal(t: Tournament | null) {
     try {
       if (t) localStorage.setItem(LOCAL_KEY, JSON.stringify(t));
-      else   localStorage.removeItem(LOCAL_KEY);
+      else localStorage.removeItem(LOCAL_KEY);
     } catch { /* quota */ }
   }
 

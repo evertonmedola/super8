@@ -4,147 +4,157 @@
 </div>
 
 @if (!store.isGenerated()) {
-  <div class="empty-state"><div class="empty-icon">🏆</div><p>Gere o torneio primeiro.</p></div>
+<div class="empty-state">
+  <div class="empty-icon">🏆</div>
+  <p>Gere o torneio primeiro.</p>
+</div>
 
 } @else if (!store.classificationComplete()) {
-  <div class="card">
-    <div class="alert alert-info">
-      ⏳ <strong>{{ store.totalMatches() - store.completedMatches() }} jogos restantes</strong> na classificatória.
-    </div>
-    <div class="progress-meta" style="margin-top:14px;">
-      <span>Classificatória</span><span>{{ store.completedMatches() }} / {{ store.totalMatches() }}</span>
-    </div>
-    <div class="progress-bar"><div class="progress-fill" [style.width.%]="store.progressPct()"></div></div>
+<div class="card">
+  <div class="alert alert-info">
+    ⏳ <strong>{{ store.totalMatches() - store.completedMatches() }} jogos restantes</strong> na classificatória.
   </div>
+  <div class="progress-meta" style="margin-top:14px;">
+    <span>Classificatória</span><span>{{ store.completedMatches() }} / {{ store.totalMatches() }}</span>
+  </div>
+  <div class="progress-bar">
+    <div class="progress-fill" [style.width.%]="store.progressPct()"></div>
+  </div>
+</div>
 
 } @else {
 
-  <!-- TOP 4 CARDS -->
-  <div class="card">
-    <div class="card-title">🎯 Classificados</div>
-    <div class="finalists-grid">
-      @for (row of classStandings(); track row.player.id) {
-        <div class="finalist-card">
-          <div class="finalist-rank">{{ rankIcon(row.rank) }}</div>
-          <div class="finalist-name">{{ row.player.name }}</div>
-          <div class="finalist-saldo" [ngClass]="saldoClass(row.saldo)">{{ saldoFmt(row.saldo) }} pts</div>
-        </div>
-      }
+<!-- TOP 4 CARDS -->
+<div class="card">
+  <div class="card-title">🎯 Classificados</div>
+  <div class="finalists-grid">
+    @for (row of classStandings(); track row.player.id) {
+    <div class="finalist-card">
+      <div class="finalist-rank">{{ rankIcon(row.rank) }}</div>
+      <div class="finalist-name">{{ row.player.name }}</div>
+      <div class="finalist-saldo" [ngClass]="saldoClass(row.saldo)">{{ saldoFmt(row.saldo) }} pts</div>
     </div>
+    }
   </div>
+</div>
 
-  <!-- START FINAL -->
-  @if (!store.finalStarted()) {
-    @if (auth.isOrganizer()) {
-      <div class="card">
-        <div class="card-title">🎲 Iniciar Fase Final</div>
-        <p class="helper-text">As duplas serão sorteadas entre os 4 finalistas — 3 jogos em rodízio.</p>
-        <button class="btn btn-primary" style="margin-top:16px;" (click)="startFinal()">🎲 Sortear e Iniciar Final</button>
-      </div>
-    } @else {
-      <div class="alert alert-info">👁️ Aguardando o organizador iniciar a fase final.</div>
-    }
+<!-- START FINAL -->
+@if (!store.finalStarted()) {
+@if (auth.isOrganizer()) {
+<div class="card">
+  <div class="card-title">🎲 Iniciar Fase Final</div>
+
+  @if (store.needsTiebreaker() && !store.tiebreakerResolved()) {
+  <div class="alert alert-info">
+    ⚡ Resolva a partida de desempate na aba <strong>Jogos</strong> antes de iniciar a final.
+  </div>
   } @else {
+  <p class="helper-text">As duplas serão sorteadas entre os 4 finalistas — 3 jogos em rodízio.</p>
+  <button class="btn btn-primary" style="margin-top:16px;" (click)="startFinal()">
+    🎲 Sortear e Iniciar Final
+  </button>
+  }
+</div>
+}
+} @else {
 
-    <!-- CHAMPION BANNER -->
-    @if (store.finalComplete() && champion()) {
-      <div class="champion-banner">
-        <div class="champion-trophy">🏆</div>
-        <div class="champion-label">CAMPEÃO</div>
-        <div class="champion-name">{{ champion()!.player.name }}</div>
-        <div class="champion-saldo" [ngClass]="saldoClass(champion()!.saldo)">
-          Saldo final: {{ saldoFmt(champion()!.saldo) }}
-        </div>
-      </div>
-    }
+<!-- CHAMPION BANNER -->
+@if (store.finalComplete() && champion()) {
+<div class="champion-banner">
+  <div class="champion-trophy">🏆</div>
+  <div class="champion-label">CAMPEÃO</div>
+  <div class="champion-name">{{ champion()!.player.name }}</div>
+  <div class="champion-saldo" [ngClass]="saldoClass(champion()!.saldo)">
+    Saldo final: {{ saldoFmt(champion()!.saldo) }}
+  </div>
+</div>
+}
 
-    <!-- FINAL MATCHES -->
-    <div class="card">
-      <div class="card-title">🎾 Jogos da Final</div>
+<!-- FINAL MATCHES -->
+<div class="card">
+  <div class="card-title">🎾 Jogos da Final</div>
 
-      @if (!auth.isOrganizer()) {
-        <div class="alert alert-info" style="margin-bottom:16px;">👁️ Modo visualização.</div>
-      }
+  @if (!auth.isOrganizer()) {
+  <div class="alert alert-info" style="margin-bottom:16px;">👁️ Modo visualização.</div>
+  }
 
-      @for (match of finalMatches; track match.game; let i = $index) {
-        <div class="match-card" [class.match-done]="match.score !== null">
-          <div class="match-header">
-            <span class="match-label">Final — Jogo {{ match.game }}</span>
-            <span class="match-status" [class.status-done]="match.score !== null">
-              {{ match.score ? '✅ Concluído' : '⏳ Pendente' }}
-            </span>
-          </div>
-
-          <div class="teams-row">
-            <div class="team-box">
-              <div class="team-player"><span class="num-badge">{{ match.team1[0] }}</span>{{ name(match.team1[0]) }}</div>
-              <div class="team-player"><span class="num-badge">{{ match.team1[1] }}</span>{{ name(match.team1[1]) }}</div>
-            </div>
-            <div class="vs-divider">
-              @if (match.score) {
-                <div class="live-score">{{ match.score.team1 }}<span>×</span>{{ match.score.team2 }}</div>
-              } @else {
-                <span class="vs-text">VS</span>
-              }
-            </div>
-            <div class="team-box team-right">
-              <div class="team-player reverse"><span class="num-badge">{{ match.team2[0] }}</span>{{ name(match.team2[0]) }}</div>
-              <div class="team-player reverse"><span class="num-badge">{{ match.team2[1] }}</span>{{ name(match.team2[1]) }}</div>
-            </div>
-          </div>
-
-          <app-score-selector
-            [current]="match.score"
-            [readonly]="!auth.isOrganizer()"
-            (scoreChange)="setScore(i, $event)"
-            (cleared)="clearScore(i)"
-          />
-        </div>
-      }
+  @for (match of finalMatches; track match.game; let i = $index) {
+  <div class="match-card" [class.match-done]="match.score !== null">
+    <div class="match-header">
+      <span class="match-label">Final — Jogo {{ match.game }}</span>
+      <span class="match-status" [class.status-done]="match.score !== null">
+        {{ match.score ? '✅ Concluído' : '⏳ Pendente' }}
+      </span>
     </div>
 
-    <!-- FINAL STANDINGS -->
-    @if (finalStandings().length) {
-      <div class="card">
-        <div class="card-title">🏅 Classificação da Final</div>
-        <p class="helper-text" style="margin-bottom:12px;">
-          Em caso de empate, usa-se o saldo da fase classificatória.
-        </p>
-        <div class="table-scroll">
-          <table class="standings-table">
-            <thead>
-              <tr>
-                <th class="col-rank">#</th>
-                <th>Jogador</th>
-                <th class="col-num">V</th>
-                <th class="col-num">E</th>
-                <th class="col-num">D</th>
-                <th class="col-num">Saldo Final</th>
-                <th class="col-num">Saldo Class.</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (row of finalStandings(); track row.player.id) {
-                <tr [class.champion-row]="row.rank === 1 && store.finalComplete()">
-                  <td class="col-rank td-rank">{{ rankIcon(row.rank) }}</td>
-                  <td class="td-name">{{ row.player.name }}</td>
-                  <td class="col-num">{{ row.wins }}</td>
-                  <td class="col-num">{{ row.draws }}</td>
-                  <td class="col-num">{{ row.losses }}</td>
-                  <td class="col-num" [ngClass]="saldoClass(row.saldo)">{{ saldoFmt(row.saldo) }}</td>
-                  <td class="col-num saldo-zero">{{ classificationSaldo(row.player.id) }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
+    <div class="teams-row">
+      <div class="team-box">
+        <div class="team-player"><span class="num-badge">{{ match.team1[0] }}</span>{{ name(match.team1[0]) }}</div>
+        <div class="team-player"><span class="num-badge">{{ match.team1[1] }}</span>{{ name(match.team1[1]) }}</div>
+      </div>
+      <div class="vs-divider">
+        @if (match.score) {
+        <div class="live-score">{{ match.score.team1 }}<span>×</span>{{ match.score.team2 }}</div>
+        } @else {
+        <span class="vs-text">VS</span>
+        }
+      </div>
+      <div class="team-box team-right">
+        <div class="team-player reverse"><span class="num-badge">{{ match.team2[0] }}</span>{{ name(match.team2[0]) }}
+        </div>
+        <div class="team-player reverse"><span class="num-badge">{{ match.team2[1] }}</span>{{ name(match.team2[1]) }}
         </div>
       </div>
-    }
+    </div>
 
-    @if (auth.isOrganizer()) {
-      <div class="card">
-        <button class="btn btn-secondary" (click)="reshuffle()">🔀 Re-sortear Duplas da Final</button>
-      </div>
-    }
+    <app-score-selector [current]="match.score" [readonly]="!auth.isOrganizer()" (scoreChange)="setScore(i, $event)"
+      (cleared)="clearScore(i)" />
+  </div>
   }
+</div>
+
+<!-- FINAL STANDINGS -->
+@if (finalStandings().length) {
+<div class="card">
+  <div class="card-title">🏅 Classificação da Final</div>
+  <p class="helper-text" style="margin-bottom:12px;">
+    Em caso de empate, usa-se o saldo da fase classificatória.
+  </p>
+  <div class="table-scroll">
+    <table class="standings-table">
+      <thead>
+        <tr>
+          <th class="col-rank">#</th>
+          <th>Jogador</th>
+          <th class="col-num">V</th>
+          <th class="col-num">E</th>
+          <th class="col-num">D</th>
+          <th class="col-num">Saldo Final</th>
+          <th class="col-num">Saldo Class.</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of finalStandings(); track row.player.id) {
+        <tr [class.champion-row]="row.rank === 1 && store.finalComplete()">
+          <td class="col-rank td-rank">{{ rankIcon(row.rank) }}</td>
+          <td class="td-name">{{ row.player.name }}</td>
+          <td class="col-num">{{ row.wins }}</td>
+          <td class="col-num">{{ row.draws }}</td>
+          <td class="col-num">{{ row.losses }}</td>
+          <td class="col-num" [ngClass]="saldoClass(row.saldo)">{{ saldoFmt(row.saldo) }}</td>
+          <td class="col-num saldo-zero">{{ classificationSaldo(row.player.id) }}</td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+}
+
+@if (auth.isOrganizer()) {
+<div class="card">
+  <button class="btn btn-secondary" (click)="reshuffle()">🔀 Re-sortear Duplas da Final</button>
+</div>
+}
+}
 }

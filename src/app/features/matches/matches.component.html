@@ -4,76 +4,115 @@
 </div>
 
 @if (!store.isGenerated()) {
-  <div class="empty-state">
-    <div class="empty-icon">⚙️</div>
-    <p>Cadastre os jogadores e gere o torneio primeiro.</p>
-  </div>
+<div class="empty-state">
+  <div class="empty-icon">⚙️</div>
+  <p>Cadastre os jogadores e gere o torneio primeiro.</p>
+</div>
 } @else {
 
-  <!-- PROGRESS -->
-  <div class="card progress-card">
-    <div class="progress-meta">
-      <span>Progresso</span>
-      <span>{{ store.completedMatches() }} / {{ store.totalMatches() }} jogos</span>
+<!-- PROGRESS -->
+<div class="card progress-card">
+  <div class="progress-meta">
+    <span>Progresso</span>
+    <span>{{ store.completedMatches() }} / {{ store.totalMatches() }} jogos</span>
+  </div>
+  <div class="progress-bar">
+    <div class="progress-fill" [style.width.%]="store.progressPct()"></div>
+  </div>
+  <div class="filter-row">
+    <button class="filter-btn" [class.active]="filter()==='all'" (click)="setFilter('all')">Todos</button>
+    <button class="filter-btn" [class.active]="filter()==='pending'" (click)="setFilter('pending')">⏳ Pendentes</button>
+    <button class="filter-btn" [class.active]="filter()==='done'" (click)="setFilter('done')">✅ Concluídos</button>
+  </div>
+</div>
+
+@if (!auth.isOrganizer()) {
+<div class="alert alert-info">👁️ Modo visualização — faça login como organizador para editar placares.</div>
+}
+
+<!-- MATCH CARDS -->
+@for (match of visibleMatches(); track match.game) {
+<div class="match-card" [class.match-done]="match.score !== null">
+  <div class="match-header">
+    <span class="match-label">Jogo {{ match.game }}</span>
+    <span class="match-status" [class.status-done]="match.score !== null">
+      {{ match.score ? '✅ Concluído' : '⏳ Pendente' }}
+    </span>
+  </div>
+
+  <div class="teams-row">
+    <div class="team-box">
+      <div class="team-player"><span class="num-badge">{{ match.team1[0] }}</span>{{ name(match.team1[0]) }}</div>
+      <div class="team-player"><span class="num-badge">{{ match.team1[1] }}</span>{{ name(match.team1[1]) }}</div>
     </div>
-    <div class="progress-bar">
-      <div class="progress-fill" [style.width.%]="store.progressPct()"></div>
+    <div class="vs-divider">
+      @if (match.score) {
+      <div class="live-score">{{ match.score.team1 }}<span>×</span>{{ match.score.team2 }}</div>
+      } @else {
+      <span class="vs-text">VS</span>
+      }
     </div>
-    <div class="filter-row">
-      <button class="filter-btn" [class.active]="filter()==='all'"     (click)="setFilter('all')">Todos</button>
-      <button class="filter-btn" [class.active]="filter()==='pending'" (click)="setFilter('pending')">⏳ Pendentes</button>
-      <button class="filter-btn" [class.active]="filter()==='done'"    (click)="setFilter('done')">✅ Concluídos</button>
+    <div class="team-box team-right">
+      <div class="team-player reverse"><span class="num-badge">{{ match.team2[0] }}</span>{{ name(match.team2[0]) }}
+      </div>
+      <div class="team-player reverse"><span class="num-badge">{{ match.team2[1] }}</span>{{ name(match.team2[1]) }}
+      </div>
     </div>
   </div>
 
-  @if (!auth.isOrganizer()) {
-    <div class="alert alert-info">👁️ Modo visualização — faça login como organizador para editar placares.</div>
-  }
+  <app-score-selector [current]="match.score" [readonly]="!auth.isOrganizer()"
+    (scoreChange)="setScore(match.index, $event)" (cleared)="clearScore(match.index)" />
+</div>
+}
 
-  <!-- MATCH CARDS -->
-  @for (match of visibleMatches(); track match.game) {
-    <div class="match-card" [class.match-done]="match.score !== null">
-      <div class="match-header">
-        <span class="match-label">Jogo {{ match.game }}</span>
-        <span class="match-status" [class.status-done]="match.score !== null">
-          {{ match.score ? '✅ Concluído' : '⏳ Pendente' }}
-        </span>
+@if (visibleMatches().length === 0) {
+<div class="empty-state">
+  <div class="empty-icon">🔍</div>
+  <p>Nenhum jogo nesta categoria.</p>
+</div>
+}
+
+@if (store.classificationComplete() && store.needsTiebreaker()) {
+<div class="card" style="border-color: rgba(255,183,3,0.4);">
+  <div class="card-title">⚡ Partida de Desempate</div>
+  <p class="helper-text" style="margin-bottom:16px;">
+    Empate na 4ª posição! Registre o resultado da partida de desempate.
+  </p>
+
+  <div class="teams-row">
+    <div class="team-box">
+      <div class="team-player">
+        <span class="num-badge">{{ store.tournament()!.tiebreaker!.players[0] }}</span>
+        {{ name(store.tournament()!.tiebreaker!.players[0]) }}
       </div>
-
-      <div class="teams-row">
-        <div class="team-box">
-          <div class="team-player"><span class="num-badge">{{ match.team1[0] }}</span>{{ name(match.team1[0]) }}</div>
-          <div class="team-player"><span class="num-badge">{{ match.team1[1] }}</span>{{ name(match.team1[1]) }}</div>
-        </div>
-        <div class="vs-divider">
-          @if (match.score) {
-            <div class="live-score">{{ match.score.team1 }}<span>×</span>{{ match.score.team2 }}</div>
-          } @else {
-            <span class="vs-text">VS</span>
-          }
-        </div>
-        <div class="team-box team-right">
-          <div class="team-player reverse"><span class="num-badge">{{ match.team2[0] }}</span>{{ name(match.team2[0]) }}</div>
-          <div class="team-player reverse"><span class="num-badge">{{ match.team2[1] }}</span>{{ name(match.team2[1]) }}</div>
-        </div>
+    </div>
+    <div class="vs-divider">
+      @if (store.tournament()!.tiebreaker?.score) {
+      <div class="live-score">
+        {{ store.tournament()!.tiebreaker!.score!.team1 }}
+        <span>×</span>
+        {{ store.tournament()!.tiebreaker!.score!.team2 }}
       </div>
-
-      <app-score-selector
-        [current]="match.score"
-        [readonly]="!auth.isOrganizer()"
-        (scoreChange)="setScore(match.index, $event)"
-        (cleared)="clearScore(match.index)"
-      />
+      } @else {
+      <span class="vs-text">VS</span>
+      }
     </div>
-  }
-
-  @if (visibleMatches().length === 0) {
-    <div class="empty-state"><div class="empty-icon">🔍</div><p>Nenhum jogo nesta categoria.</p></div>
-  }
-
-  @if (store.classificationComplete()) {
-    <div class="alert alert-success">
-      🏆 Fase classificatória concluída! Vá para a aba <strong>Final</strong>.
+    <div class="team-box team-right">
+      <div class="team-player reverse">
+        <span class="num-badge">{{ store.tournament()!.tiebreaker!.players[1] }}</span>
+        {{ name(store.tournament()!.tiebreaker!.players[1]) }}
+      </div>
     </div>
-  }
+  </div>
+
+  <app-score-selector [current]="store.tournament()!.tiebreaker?.score ?? null" [readonly]="!auth.isOrganizer()"
+    (scoreChange)="store.setTiebreakerScore($event)" (cleared)="store.clearTiebreakerScore()" />
+</div>
+}
+
+@if (store.classificationComplete()) {
+<div class="alert alert-success">
+  🏆 Fase classificatória concluída! Vá para a aba <strong>Final</strong>.
+</div>
+}
 }

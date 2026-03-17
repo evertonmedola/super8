@@ -60,6 +60,21 @@ export class StatsService {
     }));
   }
 
+  hasTiebreakerNeeded(tournament: Tournament): boolean {
+    if (!tournament.matches.every(m => m.score !== null)) return false;
+    const stats = this.computeStats(tournament.players, tournament.matches);
+    const sorted = [...stats].sort((a, b) => b.saldo - a.saldo);
+    // Empate entre o 4º e o 5º
+    return sorted[3].saldo === sorted[4].saldo;
+  }
+
+  getTiebreakerPlayers(tournament: Tournament): [number, number] | null {
+    const stats = this.computeStats(tournament.players, tournament.matches);
+    const sorted = [...stats].sort((a, b) => b.saldo - a.saldo);
+    if (sorted[3].saldo !== sorted[4].saldo) return null;
+    return [sorted[3].player.id, sorted[4].player.id];
+  }
+
   getFinalistIds(tournament: Tournament): number[] {
     const stats = this.computeStats(tournament.players, tournament.matches);
     const sorted = this.sortStats(stats, tournament.matches);
@@ -78,7 +93,7 @@ export class StatsService {
       if ((aT1 && bT2) || (aT2 && bT1)) {
         const { team1, team2 } = m.score;
         if (aT1) { sA += team1 - team2; sB += team2 - team1; }
-        else      { sA += team2 - team1; sB += team1 - team2; }
+        else { sA += team2 - team1; sB += team1 - team2; }
       }
     }
     return sB - sA;
