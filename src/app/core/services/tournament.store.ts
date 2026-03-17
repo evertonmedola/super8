@@ -135,10 +135,10 @@ export class TournamentStore implements OnDestroy {
     if (!t) return;
     const matches = t.matches.map((m, i) => i === index ? { ...m, score } : m);
 
-    // Verifica se foi o último jogo e inicializa tiebreaker se necessário
     const allDone = matches.every(m => m.score !== null);
     let tiebreaker = t.tiebreaker ?? null;
-    if (allDone && tiebreaker === null) {
+
+    if (allDone) {
       const updated = { ...t, matches };
       const pair = this.stats.getTiebreakerPlayers(updated);
       tiebreaker = pair ? { players: pair, score: null } : null;
