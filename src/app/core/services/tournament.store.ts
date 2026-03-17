@@ -76,21 +76,6 @@ export class TournamentStore implements OnDestroy {
     private stats: StatsService,
   ) {
     this.subscribeFirestore();
-
-    effect(() => {
-      const t = this.tournament();
-      if (!t || !t.players || !t.matches) return;
-      if (!this.classificationComplete()) return;
-      if (t.tiebreaker !== null && t.tiebreaker !== undefined) return;
-
-      const pair = this.stats.getTiebreakerPlayers(t);
-      console.log('Tiebreaker pair encontrado:', pair);
-      if (pair) {
-        this.commit({ ...t, tiebreaker: { players: pair, score: null } });
-      } else {
-        this.commit({ ...t, tiebreaker: null });
-      }
-    });
   }
 
   ngOnDestroy() { this.unsub?.(); }
@@ -149,7 +134,17 @@ export class TournamentStore implements OnDestroy {
     const t = this.tournament();
     if (!t) return;
     const matches = t.matches.map((m, i) => i === index ? { ...m, score } : m);
-    this.commit({ ...t, matches });
+
+    // Verifica se foi o último jogo e inicializa tiebreaker se necessário
+    const allDone = matches.every(m => m.score !== null);
+    let tiebreaker = t.tiebreaker ?? null;
+    if (allDone && tiebreaker === null) {
+      const updated = { ...t, matches };
+      const pair = this.stats.getTiebreakerPlayers(updated);
+      tiebreaker = pair ? { players: pair, score: null } : null;
+    }
+
+    this.commit({ ...t, matches, tiebreaker });
   }
 
   clearMatchScore(index: number) {
