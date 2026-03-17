@@ -80,8 +80,9 @@ export class TournamentStore implements OnDestroy {
       const t = this.tournament();
       if (!t || !this.classificationComplete()) return;
       if (t.tiebreaker !== undefined) return; // já foi inicializado
-
       const pair = this.stats.getTiebreakerPlayers(t);
+      console.log('Tiebreaker pair:', pair); // <- adicione isso
+      console.log('Tiebreaker no torneio:', t.tiebreaker);
       if (pair) {
         this.commit({ ...t, tiebreaker: { players: pair, score: null } });
       } else {
