@@ -60,18 +60,18 @@ export class StatsService {
     }));
   }
 
-  hasTiebreakerNeeded(tournament: Tournament): boolean {
-    if (!tournament.matches.every(m => m.score !== null)) return false;
+  hasTiebreakerNeeded(tournament: Tournament | null): boolean {
+    if (!tournament || !tournament.matches.every(m => m.score !== null)) return false;
     const stats = this.computeStats(tournament.players, tournament.matches);
     const sorted = [...stats].sort((a, b) => b.saldo - a.saldo);
-    // Empate entre o 4º e o 5º
-    return sorted[3].saldo === sorted[4].saldo;
+    return sorted[3]?.saldo === sorted[4]?.saldo;
   }
 
-  getTiebreakerPlayers(tournament: Tournament): [number, number] | null {
+  getTiebreakerPlayers(tournament: Tournament | null): [number, number] | null {
+    if (!tournament) return null;
     const stats = this.computeStats(tournament.players, tournament.matches);
     const sorted = [...stats].sort((a, b) => b.saldo - a.saldo);
-    if (sorted[3].saldo !== sorted[4].saldo) return null;
+    if (sorted[3]?.saldo !== sorted[4]?.saldo) return null;
     return [sorted[3].player.id, sorted[4].player.id];
   }
 

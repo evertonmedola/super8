@@ -40,7 +40,8 @@ export class TournamentStore implements OnDestroy {
 
   readonly needsTiebreaker = computed(() => {
     const t = this.tournament();
-    if (!t || !this.classificationComplete()) return false;
+    if (!t || !t.players || !this.classificationComplete()) return false;
+    if (t.tiebreaker !== null && t.tiebreaker !== undefined) return false;
     return this.stats.hasTiebreakerNeeded(t);
   });
 
@@ -78,11 +79,12 @@ export class TournamentStore implements OnDestroy {
 
     effect(() => {
       const t = this.tournament();
-      if (!t || !this.classificationComplete()) return;
-      if (t.tiebreaker !== undefined) return; // já foi inicializado
+      if (!t || !t.players || !t.matches) return;
+      if (!this.classificationComplete()) return;
+      if (t.tiebreaker !== null && t.tiebreaker !== undefined) return;
+
       const pair = this.stats.getTiebreakerPlayers(t);
-      console.log('Tiebreaker pair:', pair); // <- adicione isso
-      console.log('Tiebreaker no torneio:', t.tiebreaker);
+      console.log('Tiebreaker pair encontrado:', pair);
       if (pair) {
         this.commit({ ...t, tiebreaker: { players: pair, score: null } });
       } else {
