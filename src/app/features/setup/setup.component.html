@@ -7,7 +7,7 @@
 <div class="card">
   <div class="card-title">🏷️ Nome do Torneio</div>
   <input class="input" type="text" [value]="tournamentName()" (input)="updateTournamentName($any($event.target).value)"
-    placeholder="Ex: Super 8 Arena — Março 2026" />
+    placeholder="Ex: Super 8 Arena — Março 2026" [disabled]="!auth.isOrganizer()" />
 </div>
 
 <!-- PLAYERS -->
@@ -18,7 +18,8 @@
     <div class="player-row">
       <span class="player-badge">{{ num }}</span>
       <input class="input" type="text" [value]="players()[num - 1]"
-        (input)="updatePlayer(num - 1, $any($event.target).value)" placeholder="Jogador {{ num }}" />
+        (input)="updatePlayer(num - 1, $any($event.target).value)" placeholder="Jogador {{ num }}"
+        [disabled]="!auth.isOrganizer()" />
     </div>
     }
   </div>
@@ -106,7 +107,7 @@
       {{ mode() === 'auto' ? '🎲 Sortear e Gerar' : '✅ Confirmar e Gerar' }}
     </button>
     @if (store.isGenerated() && auth.isOrganizer()) {
-    <button class="btn btn-danger" (click)="confirmReset()">🗑️ Resetar</button>
+    <button class="btn btn-danger" (click)="confirmReset() || !auth.isOrganizer()">🗑️ Resetar</button>
     }
   </div>
 
