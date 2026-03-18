@@ -6,8 +6,8 @@
 <!-- TOURNAMENT NAME -->
 <div class="card">
   <div class="card-title">🏷️ Nome do Torneio</div>
-  <input class="input" type="text" [value]="tournamentName()" (input)="tournamentName.set($any($event.target).value)"
-    placeholder="Ex: Super 8 Arena — Março 2025" />
+  <input class="input" type="text" [value]="tournamentName()" (input)="updateTournamentName($any($event.target).value)"
+    placeholder="Ex: Super 8 Arena — Março 2026" />
 </div>
 
 <!-- PLAYERS -->

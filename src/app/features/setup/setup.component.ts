@@ -74,6 +74,19 @@ export class SetupComponent implements OnInit {
     const arr = [...this.players()];
     arr[index] = value;
     this.players.set(arr);
+
+    if (this.tournamentName().trim()) {
+      const playerObjs: Player[] = arr.map((name, i) => ({ id: i + 1, name: name.trim() }));
+      this.store.upsertTournament(this.tournamentName().trim(), playerObjs);
+    }
+  }
+
+  updateTournamentName(value: string) {
+    this.tournamentName.set(value);
+    if (value.trim() && this.players().some(p => p.trim())) {
+      const playerObjs: Player[] = this.players().map((name, i) => ({ id: i + 1, name: name.trim() }));
+      this.store.upsertTournament(value.trim(), playerObjs);
+    }
   }
 
   updateManualTeam(matchIdx: number, team: 'team1' | 'team2', slot: 0 | 1, value: number) {
@@ -92,8 +105,8 @@ export class SetupComponent implements OnInit {
   confirmReset() {
     if (confirm('Apagar todos os dados do torneio?')) {
       this.store.reset();
-      this.tournamentName = signal('');
-      this.players = signal<string[]>(Array(8).fill(''));
+      this.tournamentName.set('');
+      this.players.set(Array(8).fill(''));
     }
   }
 
