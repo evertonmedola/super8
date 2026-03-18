@@ -107,7 +107,7 @@
       {{ mode() === 'auto' ? '🎲 Sortear e Gerar' : '✅ Confirmar e Gerar' }}
     </button>
     @if (store.isGenerated() && auth.isOrganizer()) {
-    <button class="btn btn-danger" (click)="confirmReset() || !auth.isOrganizer()">🗑️ Resetar</button>
+    <button class="btn btn-danger" (click)="confirmReset()">🗑️ Resetar</button>
     }
   </div>
 
