@@ -324,6 +324,23 @@ body {
   }
 }
 
+.input-select {
+  width: 100%;
+  min-width: 130px;
+  padding: 8px 10px;
+  cursor: pointer;
+
+  option {
+    background: #0D2818;
+    color: #FAFAFA;
+  }
+
+  option:checked {
+    background: #40916C;
+    color: #FAFAFA;
+  }
+}
+
 input[type=number]::-webkit-inner-spin-button {
   opacity: .4;
 }
