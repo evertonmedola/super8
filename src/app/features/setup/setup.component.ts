@@ -93,7 +93,7 @@ export class SetupComponent implements OnInit {
     const matches = this.manualMatches().map((m, i) => {
       if (i !== matchIdx) return m;
       const arr: [number, number] = [...m[team]] as [number, number];
-      arr[slot] = value;
+      arr[slot] = Number(value);
       return { ...m, [team]: arr };
     });
     this.manualMatches.set(matches);

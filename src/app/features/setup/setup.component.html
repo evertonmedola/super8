@@ -72,26 +72,26 @@
             <td><select class="input input-select" [ngModel]="m.team1[0]"
                 (ngModelChange)="updateManualTeam(i,'team1',0,$event)">
                 @for (p of playerNumbers; track p) {
-                <option [value]="p">{{ p }} — {{ players()[p-1] || 'Jogador ' + p }}</option>
+                <option [ngValue]="p">{{ p }} — {{ players()[p-1] || 'Jogador ' + p }}</option>
                 }
               </select>
             <td><select class="input input-select" [ngModel]="m.team1[1]"
                 (ngModelChange)="updateManualTeam(i,'team1',1,$event)">
                 @for (p of playerNumbers; track p) {
-                <option [value]="p">{{ p }} — {{ players()[p-1] || 'Jogador ' + p }}</option>
+                <option [ngValue]="p">{{ p }} — {{ players()[p-1] || 'Jogador ' + p }}</option>
                 }
               </select>
             <td class="vs-cell">×</td>
             <td><select class="input input-select" [ngModel]="m.team2[0]"
                 (ngModelChange)="updateManualTeam(i,'team2',0,$event)">
                 @for (p of playerNumbers; track p) {
-                <option [value]="p">{{ p }} — {{ players()[p-1] || 'Jogador ' + p }}</option>
+                <option [ngValue]="p">{{ p }} — {{ players()[p-1] || 'Jogador ' + p }}</option>
                 }
               </select>
             <td><select class="input input-select" [ngModel]="m.team2[1]"
                 (ngModelChange)="updateManualTeam(i,'team2',1,$event)">
                 @for (p of playerNumbers; track p) {
-                <option [value]="p">{{ p }} — {{ players()[p-1] || 'Jogador ' + p }}</option>
+                <option [ngValue]="p">{{ p }} — {{ players()[p-1] || 'Jogador ' + p }}</option>
                 }
               </select>
           </tr>
