@@ -6,21 +6,60 @@
 <!-- TOURNAMENT NAME -->
 <div class="card">
   <div class="card-title">🏷️ Nome do Torneio</div>
-  <input class="input" type="text" [value]="tournamentName()" (input)="updateTournamentName($any($event.target).value)"
-    placeholder="Ex: Super 8 Arena — Março 2026" [disabled]="!auth.isOrganizer()" />
+  <input
+    class="input"
+    type="text"
+    [value]="tournamentName()"
+    (input)="updateTournamentName($any($event.target).value)"
+    placeholder="Ex: Super 8 Arena — Março 2026"
+    [disabled]="!auth.isOrganizer()"
+  />
+</div>
+
+<div class="card">
+  <div class="card-title">🏆 Formato do Torneio</div>
+  <div class="mode-selector">
+    <button
+      class="mode-btn"
+      [class.active]="tournamentType() === 'super8'"
+      (click)="tournamentType.set('super8')"
+    >
+      <span class="mode-icon">8️⃣</span>
+      <div>
+        <div class="mode-label">Super 8</div>
+        <div class="mode-desc">8 jogadores, 14 jogos, fase final com top 4</div>
+      </div>
+    </button>
+    <button
+      class="mode-btn"
+      [class.active]="tournamentType() === 'super12'"
+      (click)="tournamentType.set('super12')"
+    >
+      <span class="mode-icon">🔢</span>
+      <div>
+        <div class="mode-label">Super 12</div>
+        <div class="mode-desc">12 jogadores, 33 jogos, vence por saldo</div>
+      </div>
+    </button>
+  </div>
 </div>
 
 <!-- PLAYERS -->
 <div class="card">
   <div class="card-title">👥 Jogadores</div>
   <div class="players-grid">
-    @for (num of playerNumbers; track num) {
-    <div class="player-row">
-      <span class="player-badge">{{ num }}</span>
-      <input class="input" type="text" [value]="players()[num - 1]"
-        (input)="updatePlayer(num - 1, $any($event.target).value)" placeholder="Jogador {{ num }}"
-        [disabled]="!auth.isOrganizer()" />
-    </div>
+    @for (num of playerNumbers(); track num) {
+      <div class="player-row">
+        <span class="player-badge">{{ num }}</span>
+        <input
+          class="input"
+          type="text"
+          [value]="players()[num - 1]"
+          (input)="updatePlayer(num - 1, $any($event.target).value)"
+          placeholder="Jogador {{ num }}"
+          [disabled]="!auth.isOrganizer()"
+        />
+      </div>
     }
   </div>
 </div>
@@ -30,14 +69,24 @@
   <div class="card-title">⚙️ Geração dos Jogos</div>
 
   <div class="mode-selector">
-    <button class="mode-btn" [class.active]="mode() === 'auto'" (click)="setMode('auto')">
+    <button
+      class="mode-btn"
+      [class.active]="mode() === 'auto'"
+      (click)="setMode('auto')"
+    >
       <span class="mode-icon">🎲</span>
       <div>
         <div class="mode-label">Sorteio Automático</div>
-        <div class="mode-desc">Duplas geradas aleatoriamente, sem repetição de parceria</div>
+        <div class="mode-desc">
+          Duplas geradas aleatoriamente, sem repetição de parceria
+        </div>
       </div>
     </button>
-    <button class="mode-btn" [class.active]="mode() === 'manual'" (click)="setMode('manual')">
+    <button
+      class="mode-btn"
+      [class.active]="mode() === 'manual'"
+      (click)="setMode('manual')"
+    >
       <span class="mode-icon">✍️</span>
       <div>
         <div class="mode-label">Definir Manualmente</div>
@@ -46,75 +95,114 @@
     </button>
   </div>
 
-  @if (mode() === 'manual') {
-  <div class="manual-section">
-    <div class="manual-header">
-      <span class="helper-text">Edite os números (1–8) de cada dupla:</span>
-      <button class="btn btn-secondary btn-sm" (click)="resetManual()">↺ Resetar</button>
+  @if (mode() === "manual") {
+    <div class="manual-section">
+      <div class="manual-header">
+        <span class="helper-text">Edite os números (1–8) de cada dupla:</span>
+        <button class="btn btn-secondary btn-sm" (click)="resetManual()">
+          ↺ Resetar
+        </button>
+      </div>
+      @if (manualError()) {
+        <div class="alert alert-danger">⚠️ {{ manualError() }}</div>
+      }
+      <div class="table-scroll">
+        <table class="manual-table">
+          <thead>
+            <tr>
+              <th>Jogo</th>
+              <th colspan="2">Time A</th>
+              <th></th>
+              <th colspan="2">Time B</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (m of manualMatches(); track m.game; let i = $index) {
+              <tr>
+                <td class="game-num">{{ m.game }}</td>
+                <td>
+                  <select
+                    class="input input-select"
+                    [ngModel]="m.team1[0]"
+                    (ngModelChange)="updateManualTeam(i, 'team1', 0, $event)"
+                  >
+                    @for (p of playerNumbers(); track p) {
+                      <option [ngValue]="p">
+                        {{ p }} — {{ players()[p - 1] || "Jogador " + p }}
+                      </option>
+                    }
+                  </select>
+                </td>
+
+                <td>
+                  <select
+                    class="input input-select"
+                    [ngModel]="m.team1[1]"
+                    (ngModelChange)="updateManualTeam(i, 'team1', 1, $event)"
+                  >
+                    @for (p of playerNumbers(); track p) {
+                      <option [ngValue]="p">
+                        {{ p }} — {{ players()[p - 1] || "Jogador " + p }}
+                      </option>
+                    }
+                  </select>
+                </td>
+
+                <td class="vs-cell">×</td>
+                <td>
+                  <select
+                    class="input input-select"
+                    [ngModel]="m.team2[0]"
+                    (ngModelChange)="updateManualTeam(i, 'team2', 0, $event)"
+                  >
+                    @for (p of playerNumbers(); track p) {
+                      <option [ngValue]="p">
+                        {{ p }} — {{ players()[p - 1] || "Jogador " + p }}
+                      </option>
+                    }
+                  </select>
+                </td>
+
+                <td>
+                  <select
+                    class="input input-select"
+                    [ngModel]="m.team2[1]"
+                    (ngModelChange)="updateManualTeam(i, 'team2', 1, $event)"
+                  >
+                    @for (p of playerNumbers(); track p) {
+                      <option [ngValue]="p">
+                        {{ p }} — {{ players()[p - 1] || "Jogador " + p }}
+                      </option>
+                    }
+                  </select>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     </div>
-    @if (manualError()) {
-    <div class="alert alert-danger">⚠️ {{ manualError() }}</div>
-    }
-    <div class="table-scroll">
-      <table class="manual-table">
-        <thead>
-          <tr>
-            <th>Jogo</th>
-            <th colspan="2">Time A</th>
-            <th></th>
-            <th colspan="2">Time B</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (m of manualMatches(); track m.game; let i = $index) {
-          <tr>
-            <td class="game-num">{{ m.game }}</td>
-            <td><select class="input input-select" [ngModel]="m.team1[0]"
-                (ngModelChange)="updateManualTeam(i,'team1',0,$event)">
-                @for (p of playerNumbers; track p) {
-                <option [ngValue]="p">{{ p }} — {{ players()[p-1] || 'Jogador ' + p }}</option>
-                }
-              </select>
-            <td><select class="input input-select" [ngModel]="m.team1[1]"
-                (ngModelChange)="updateManualTeam(i,'team1',1,$event)">
-                @for (p of playerNumbers; track p) {
-                <option [ngValue]="p">{{ p }} — {{ players()[p-1] || 'Jogador ' + p }}</option>
-                }
-              </select>
-            <td class="vs-cell">×</td>
-            <td><select class="input input-select" [ngModel]="m.team2[0]"
-                (ngModelChange)="updateManualTeam(i,'team2',0,$event)">
-                @for (p of playerNumbers; track p) {
-                <option [ngValue]="p">{{ p }} — {{ players()[p-1] || 'Jogador ' + p }}</option>
-                }
-              </select>
-            <td><select class="input input-select" [ngModel]="m.team2[1]"
-                (ngModelChange)="updateManualTeam(i,'team2',1,$event)">
-                @for (p of playerNumbers; track p) {
-                <option [ngValue]="p">{{ p }} — {{ players()[p-1] || 'Jogador ' + p }}</option>
-                }
-              </select>
-          </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </div>
   }
 
-  <div class="btn-row" style="margin-top: 20px;">
-    <button class="btn btn-primary" [disabled]="!canGenerate() || !auth.isOrganizer()" (click)="generate()">
-      {{ mode() === 'auto' ? '🎲 Sortear e Gerar' : '✅ Confirmar e Gerar' }}
+  <div class="btn-row" style="margin-top: 20px">
+    <button
+      class="btn btn-primary"
+      [disabled]="!canGenerate() || !auth.isOrganizer()"
+      (click)="generate()"
+    >
+      {{ mode() === "auto" ? "🎲 Sortear e Gerar" : "✅ Confirmar e Gerar" }}
     </button>
     @if (store.isGenerated() && auth.isOrganizer()) {
-    <button class="btn btn-danger" (click)="confirmReset()">🗑️ Resetar</button>
+      <button class="btn btn-danger" (click)="confirmReset()">
+        🗑️ Resetar
+      </button>
     }
   </div>
 
   @if (store.isGenerated()) {
-  <div class="alert alert-success" style="margin-top:14px;">
-    ✅ Torneio gerado! Vá para a aba <strong>Jogos</strong>.
-  </div>
+    <div class="alert alert-success" style="margin-top: 14px">
+      ✅ Torneio gerado! Vá para a aba <strong>Jogos</strong>.
+    </div>
   }
 </div>
 
@@ -122,49 +210,151 @@
 <div class="card">
   <div class="card-title">🔐 Acesso do Organizador</div>
   <p class="helper-text">
-    Defina uma senha para proteger a edição dos placares.
-    Qualquer pessoa com o link pode <strong>visualizar</strong> o torneio,
-    mas só o organizador pode <strong>editar</strong>.
+    Defina uma senha para proteger a edição dos placares. Qualquer pessoa com o
+    link pode <strong>visualizar</strong> o torneio, mas só o organizador pode
+    <strong>editar</strong>.
   </p>
 
   @if (!auth.hasPassword()) {
-  <!-- Set password for the first time -->
-  @if (!showPasswordForm()) {
-  <button class="btn btn-secondary" style="margin-top:14px;" (click)="showPasswordForm.set(true)">
-    🔑 Definir senha
-  </button>
+    <!-- Set password for the first time -->
+    @if (!showPasswordForm()) {
+      <button
+        class="btn btn-secondary"
+        style="margin-top: 14px"
+        (click)="showPasswordForm.set(true)"
+      >
+        🔑 Definir senha
+      </button>
+    } @else {
+      <div class="password-form">
+        @if (passwordError()) {
+          <div class="alert alert-danger">{{ passwordError() }}</div>
+        }
+        @if (passwordSuccess()) {
+          <div class="alert alert-success">{{ passwordSuccess() }}</div>
+        }
+        <input
+          class="input"
+          type="password"
+          [(ngModel)]="newPassword"
+          placeholder="Nova senha (mín. 4 caracteres)"
+        />
+        <input
+          class="input"
+          type="password"
+          [(ngModel)]="confirmPassword"
+          placeholder="Confirmar senha"
+          style="margin-top: 8px"
+        />
+        <div class="btn-row" style="margin-top: 12px">
+          <button class="btn btn-primary" (click)="savePassword()">
+            💾 Salvar senha
+          </button>
+          <button
+            class="btn btn-secondary"
+            (click)="showPasswordForm.set(false)"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    }
   } @else {
-  <div class="password-form">
-    @if (passwordError()) { <div class="alert alert-danger">{{ passwordError() }}</div> }
-    @if (passwordSuccess()) { <div class="alert alert-success">{{ passwordSuccess() }}</div> }
-    <input class="input" type="password" [(ngModel)]="newPassword" placeholder="Nova senha (mín. 4 caracteres)" />
-    <input class="input" type="password" [(ngModel)]="confirmPassword" placeholder="Confirmar senha"
-      style="margin-top:8px;" />
-    <div class="btn-row" style="margin-top:12px;">
-      <button class="btn btn-primary" (click)="savePassword()">💾 Salvar senha</button>
-      <button class="btn btn-secondary" (click)="showPasswordForm.set(false)">Cancelar</button>
+    <div class="alert alert-success" style="margin-top: 14px">
+      ✅ Senha definida. Organizador autenticado neste dispositivo.
     </div>
-  </div>
-  }
-  } @else {
-  <div class="alert alert-success" style="margin-top:14px;">✅ Senha definida. Organizador autenticado neste dispositivo.
-  </div>
 
-  @if (!showChangeForm()) {
-  <button class="btn btn-secondary btn-sm" style="margin-top:12px;" (click)="showChangeForm.set(true)">
-    🔄 Alterar senha
-  </button>
-  } @else {
-  <div class="password-form" style="margin-top:14px;">
-    @if (passwordError()) { <div class="alert alert-danger">{{ passwordError() }}</div> }
-    @if (passwordSuccess()) { <div class="alert alert-success">{{ passwordSuccess() }}</div> }
-    <input class="input" type="password" [(ngModel)]="currentPassword" placeholder="Senha atual" />
-    <input class="input" type="password" [(ngModel)]="nextPassword" placeholder="Nova senha" style="margin-top:8px;" />
-    <div class="btn-row" style="margin-top:12px;">
-      <button class="btn btn-primary" (click)="changePassword()">💾 Alterar</button>
-      <button class="btn btn-secondary" (click)="showChangeForm.set(false)">Cancelar</button>
-    </div>
-  </div>
-  }
+    @if (!showChangeForm()) {
+      <button
+        class="btn btn-secondary btn-sm"
+        style="margin-top: 12px"
+        (click)="showChangeForm.set(true)"
+      >
+        🔄 Alterar senha
+      </button>
+    } @else {
+      <div class="password-form" style="margin-top: 14px">
+        @if (passwordError()) {
+          <div class="alert alert-danger">{{ passwordError() }}</div>
+        }
+        @if (passwordSuccess()) {
+          <div class="alert alert-success">{{ passwordSuccess() }}</div>
+        }
+        <input
+          class="input"
+          type="password"
+          [(ngModel)]="secretKey"
+          placeholder="Secret"
+        />
+        <input
+          class="input"
+          type="password"
+          [(ngModel)]="nextPassword"
+          placeholder="Nova senha"
+          style="margin-top: 8px"
+        />
+        <div class="btn-row" style="margin-top: 12px">
+          <button class="btn btn-primary" (click)="changePassword()">
+            💾 Alterar
+          </button>
+          <button class="btn btn-secondary" (click)="showChangeForm.set(false)">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- SECRET -->
+    @if (!auth.hasSecret()) {
+      @if (!showSecretForm()) {
+        <button
+          class="btn btn-secondary btn-sm"
+          style="margin-top: 12px"
+          (click)="showSecretForm.set(true)"
+        >
+          🔒 Definir secret
+        </button>
+      } @else {
+        <div class="password-form" style="margin-top: 14px">
+          @if (passwordError()) {
+            <div class="alert alert-danger">{{ passwordError() }}</div>
+          }
+          @if (passwordSuccess()) {
+            <div class="alert alert-success">{{ passwordSuccess() }}</div>
+          }
+          <p class="helper-text" style="margin-bottom: 10px">
+            O secret é necessário para alterar a senha. Guarde-o com segurança.
+          </p>
+          <input
+            class="input"
+            type="password"
+            [(ngModel)]="newSecret"
+            placeholder="Novo secret (mín. 4 caracteres)"
+          />
+          <input
+            class="input"
+            type="password"
+            [(ngModel)]="confirmSecret"
+            placeholder="Confirmar secret"
+            style="margin-top: 8px"
+          />
+          <div class="btn-row" style="margin-top: 12px">
+            <button class="btn btn-primary" (click)="saveSecret()">
+              💾 Salvar secret
+            </button>
+            <button
+              class="btn btn-secondary"
+              (click)="showSecretForm.set(false)"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      }
+    } @else {
+      <div class="alert alert-success" style="margin-top: 12px">
+        🔒 Secret definido.
+      </div>
+    }
   }
 </div>

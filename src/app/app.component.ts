@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SetupComponent } from './features/setup/setup.component';
@@ -24,12 +24,16 @@ export class AppComponent {
   loginPassword = '';
   loginError = signal<string | null>(null);
 
-  readonly nav: { id: Page; label: string }[] = [
-    { id: 'setup', label: 'Jogadores' },
-    { id: 'matches', label: 'Jogos' },
-    { id: 'standings', label: 'Classificação' },
-    { id: 'final', label: 'Final' },
-  ];
+  readonly nav = computed(() => {
+    const isSuper12 = this.store.isSuper12();
+    const items: { id: Page; label: string }[] = [
+      { id: 'setup', label: 'Jogadores' },
+      { id: 'matches', label: 'Jogos' },
+      { id: 'standings', label: 'Classificação' },
+    ];
+    if (!isSuper12) items.push({ id: 'final', label: 'Final' });
+    return items;
+  });
 
   constructor(public store: TournamentStore, public auth: AuthService) { }
 

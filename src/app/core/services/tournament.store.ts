@@ -4,7 +4,7 @@ import {
   Unsubscribe, DocumentSnapshot
 } from 'firebase/firestore';
 import { db } from '../firebase.config';
-import { Tournament, Player, Match, FinalMatch, GenerationMode, MatchScore } from '../models/tournament.model';
+import { Tournament, Player, Match, FinalMatch, GenerationMode, MatchScore, TournamentType } from '../models/tournament.model';
 import { ScheduleService } from './schedule.service';
 import { StatsService } from './stats.service';
 
@@ -69,6 +69,8 @@ export class TournamentStore implements OnDestroy {
     return !!t && t.finalMatches.length > 0 && t.finalMatches.every(m => m.score !== null);
   });
 
+  readonly isSuper12 = computed(() => this.tournament()?.type === 'super12');
+
   private unsub: Unsubscribe | null = null;
 
   constructor(
@@ -100,13 +102,14 @@ export class TournamentStore implements OnDestroy {
 
   // ── Setup ────────────────────────────────────────────────────────
 
-  upsertTournament(name: string, players: Player[]) {
+  upsertTournament(name: string, players: Player[], type: TournamentType) {
     const current = this.tournament();
     const next: Tournament = current
-      ? { ...current, name, players }
+      ? { ...current, name, players, type }
       : {
         id: crypto.randomUUID(),
         name,
+        type,
         createdAt: new Date().toISOString(),
         phase: 'setup',
         players,
@@ -122,9 +125,16 @@ export class TournamentStore implements OnDestroy {
   generateMatches(mode: GenerationMode, manualMatches?: Match[]) {
     const t = this.tournament();
     if (!t) return;
-    const matches = mode === 'auto'
-      ? this.schedule.getRandomSchedule()
-      : (manualMatches ?? this.schedule.getFixedSchedule());
+    let matches: Match[];
+    if (t.type === 'super12') {
+      matches = mode === 'auto'
+        ? this.schedule.getRandomScheduleSuper12()
+        : (manualMatches ?? this.schedule.getFixedScheduleSuper12());
+    } else {
+      matches = mode === 'auto'
+        ? this.schedule.getRandomSchedule()
+        : (manualMatches ?? this.schedule.getFixedSchedule());
+    }
     this.commit({ ...t, generationMode: mode, matches, phase: 'classification', finalMatches: [], finalists: [], tiebreaker: null });
   }
 

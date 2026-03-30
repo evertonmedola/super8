@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { TournamentStore } from '../../core/services/tournament.store';
 import { ScheduleService } from '../../core/services/schedule.service';
 import { AuthService } from '../../core/services/auth.service';
-import { Player, Match, GenerationMode } from '../../core/models/tournament.model';
+import { Player, Match, GenerationMode, TournamentType } from '../../core/models/tournament.model';
 
 @Component({
   selector: 'app-setup',
@@ -18,8 +18,12 @@ export class SetupComponent implements OnInit {
   mode = signal<GenerationMode>('auto');
   manualMatches = signal<Match[]>([]);
   manualError = signal<string | null>(null);
+  tournamentType = signal<TournamentType>('super8');
 
   // Password setup
+  secretKey = '';
+  newSecret = '';
+  confirmSecret = '';
   newPassword = '';
   confirmPassword = '';
   currentPassword = '';
@@ -27,13 +31,16 @@ export class SetupComponent implements OnInit {
   passwordError = signal<string | null>(null);
   passwordSuccess = signal<string | null>(null);
   showPasswordForm = signal(false);
+  showSecretForm = signal(false);
   showChangeForm = signal(false);
 
-  readonly playerNumbers = [1, 2, 3, 4, 5, 6, 7, 8];
-
+  readonly playerNumbers = computed(() =>
+    Array.from({ length: this.tournamentType() === 'super12' ? 12 : 8 }, (_, i) => i + 1)
+  );
   readonly canGenerate = computed(() =>
     this.tournamentName().trim().length > 0 &&
-    this.players().every(p => p.trim().length > 0)
+    this.players().every(p => p.trim().length > 0) &&
+    this.players().length === (this.tournamentType() === 'super12' ? 12 : 8)
   );
 
 
@@ -58,7 +65,7 @@ export class SetupComponent implements OnInit {
   generate() {
     if (!this.canGenerate()) return;
     const playerObjs: Player[] = this.players().map((name, i) => ({ id: i + 1, name: name.trim() }));
-    this.store.upsertTournament(this.tournamentName().trim(), playerObjs);
+    this.store.upsertTournament(this.tournamentName().trim(), playerObjs, this.tournamentType());
 
     if (this.mode() === 'manual') {
       const val = this.scheduleService.validateManualSchedule(this.manualMatches());
@@ -77,7 +84,7 @@ export class SetupComponent implements OnInit {
 
     if (this.tournamentName().trim()) {
       const playerObjs: Player[] = arr.map((name, i) => ({ id: i + 1, name: name.trim() }));
-      this.store.upsertTournament(this.tournamentName().trim(), playerObjs);
+      this.store.upsertTournament(this.tournamentName().trim(), playerObjs, this.tournamentType());
     }
   }
 
@@ -85,7 +92,7 @@ export class SetupComponent implements OnInit {
     this.tournamentName.set(value);
     if (value.trim() && this.players().some(p => p.trim())) {
       const playerObjs: Player[] = this.players().map((name, i) => ({ id: i + 1, name: name.trim() }));
-      this.store.upsertTournament(value.trim(), playerObjs);
+      this.store.upsertTournament(value.trim(), playerObjs, this.tournamentType());
     }
   }
 
@@ -122,13 +129,23 @@ export class SetupComponent implements OnInit {
     setTimeout(() => { this.passwordSuccess.set(null); this.showPasswordForm.set(false); }, 2000);
   }
 
+  async saveSecret() {
+    if (this.newSecret.length < 4) { this.passwordError.set('Secret deve ter pelo menos 4 caracteres.'); return; }
+    if (this.newSecret !== this.confirmSecret) { this.passwordError.set('Os secrets não coincidem.'); return; }
+    await this.auth.setSecret(this.newSecret);
+    this.passwordError.set(null);
+    this.passwordSuccess.set('Secret definido com sucesso!');
+    this.newSecret = ''; this.confirmSecret = '';
+    setTimeout(() => { this.passwordSuccess.set(null); this.showSecretForm.set(false); }, 2000);
+  }
+
   async changePassword() {
     if (this.nextPassword.length < 4) { this.passwordError.set('Nova senha deve ter pelo menos 4 caracteres.'); return; }
-    const ok = await this.auth.changePassword(this.currentPassword, this.nextPassword);
-    if (!ok) { this.passwordError.set('Senha atual incorreta.'); return; }
+    const ok = await this.auth.changePassword(this.secretKey, this.nextPassword);
+    if (!ok) { this.passwordError.set('Secret incorreto.'); return; }
     this.passwordError.set(null);
     this.passwordSuccess.set('Senha alterada com sucesso!');
-    this.currentPassword = ''; this.nextPassword = '';
+    this.secretKey = ''; this.nextPassword = '';
     setTimeout(() => { this.passwordSuccess.set(null); this.showChangeForm.set(false); }, 2000);
   }
 }

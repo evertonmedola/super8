@@ -39,9 +39,12 @@ export interface TiebreakerMatch {
 export type GenerationMode = 'auto' | 'manual';
 export type TournamentPhase = 'setup' | 'classification' | 'final' | 'finished';
 
+export type TournamentType = 'super8' | 'super12';
+
 export interface Tournament {
   id: string;
   name: string;
+  type: TournamentType
   createdAt: string;
   phase: TournamentPhase;
   players: Player[];
