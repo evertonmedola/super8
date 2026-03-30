@@ -8,15 +8,18 @@
   </div>
 
   <nav class="nav-desktop">
-    @for (item of nav; track item.id) {
-      <button class="nav-btn" [class.active]="page() === item.id" (click)="goTo(item.id)">
+    @for (item of nav(); track item.id) {
+      <button
+        class="nav-btn"
+        [class.active]="page() === item.id"
+        (click)="goTo(item.id)"
+      >
         {{ item.label }}
       </button>
     }
   </nav>
 
   <div class="header-actions">
-
     <!-- Sync / online status -->
     @if (store.syncing()) {
       <span class="status-badge syncing">⏳ Salvando…</span>
@@ -30,23 +33,31 @@
     @if (auth.hasPassword()) {
       @if (auth.isOrganizer()) {
         <span class="auth-badge organizer">🔓 Organizador</span>
-        <button class="btn btn-secondary btn-sm" (click)="logout()">Sair</button>
+        <button class="btn btn-secondary btn-sm" (click)="logout()">
+          Sair
+        </button>
       } @else {
         <span class="auth-badge viewer">👁️ Visualização</span>
-        <button class="btn btn-primary btn-sm" (click)="openLogin()">🔑 Entrar</button>
+        <button class="btn btn-primary btn-sm" (click)="openLogin()">
+          🔑 Entrar
+        </button>
       }
     }
 
     <button class="menu-toggle" (click)="menuOpen.update(v => !v)">
-      {{ menuOpen() ? '✕' : '☰' }}
+      {{ menuOpen() ? "✕" : "☰" }}
     </button>
   </div>
 </header>
 
 @if (menuOpen()) {
   <div class="nav-mobile">
-    @for (item of nav; track item.id) {
-      <button class="nav-mobile-btn" [class.active]="page() === item.id" (click)="goTo(item.id)">
+    @for (item of nav(); track item.id) {
+      <button
+        class="nav-mobile-btn"
+        [class.active]="page() === item.id"
+        (click)="goTo(item.id)"
+      >
         {{ item.label }}
       </button>
     }
@@ -55,10 +66,18 @@
 
 <main class="main">
   @switch (page()) {
-    @case ('setup')     { <app-setup />     }
-    @case ('matches')   { <app-matches />   }
-    @case ('standings') { <app-standings /> }
-    @case ('final')     { <app-final />     }
+    @case ("setup") {
+      <app-setup />
+    }
+    @case ("matches") {
+      <app-matches />
+    }
+    @case ("standings") {
+      <app-standings />
+    }
+    @case ("final") {
+      <app-final />
+    }
   }
 </main>
 
@@ -67,15 +86,27 @@
   <div class="modal-backdrop" (click)="closeLogin()">
     <div class="modal" (click)="$event.stopPropagation()">
       <div class="modal-title">🔑 Acesso do Organizador</div>
-      <p class="helper-text" style="margin-bottom:16px;">Digite a senha para editar o torneio.</p>
+      <p class="helper-text" style="margin-bottom: 16px">
+        Digite a senha para editar o torneio.
+      </p>
       @if (loginError()) {
-        <div class="alert alert-danger" style="margin-bottom:12px;">{{ loginError() }}</div>
+        <div class="alert alert-danger" style="margin-bottom: 12px">
+          {{ loginError() }}
+        </div>
       }
-      <input class="input" type="password" [(ngModel)]="loginPassword"
-        placeholder="Senha" (keydown.enter)="submitLogin()" autofocus />
-      <div class="btn-row" style="margin-top:14px;">
+      <input
+        class="input"
+        type="password"
+        [(ngModel)]="loginPassword"
+        placeholder="Senha"
+        (keydown.enter)="submitLogin()"
+        autofocus
+      />
+      <div class="btn-row" style="margin-top: 14px">
         <button class="btn btn-primary" (click)="submitLogin()">Entrar</button>
-        <button class="btn btn-secondary" (click)="closeLogin()">Cancelar</button>
+        <button class="btn btn-secondary" (click)="closeLogin()">
+          Cancelar
+        </button>
       </div>
     </div>
   </div>

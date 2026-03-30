@@ -55,16 +55,17 @@
     </div>
 
     @if (store.classificationComplete()) {
-  @if (store.isSuper12()) {
-    <div class="alert alert-success" style="margin-top:16px;">
-      🏆 Torneio concluído! Confira o campeão pelo saldo de pontos.
-    </div>
-  } @else {
-    <div class="alert alert-success" style="margin-top:16px;">
-      ✅ Top 4 definidos! Vá para a aba <strong>Final</strong>.
-    </div>
-  }
-}
+      @if (store.isSuper12()) {
+        <div class="alert alert-success" style="margin-top: 16px">
+          🏆 Torneio concluído! Confira o campeão pelo saldo de pontos.
+        </div>
+      } @else {
+        <div class="alert alert-success" style="margin-top: 16px">
+          ✅ Top 4 definidos! Vá para a aba <strong>Final</strong>.
+        </div>
+      }
+    }
+  </div>
 
   <div class="card">
     <div class="card-title">ℹ️ Critério de Desempate</div>
